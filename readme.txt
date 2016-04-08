@@ -1,0 +1,1 @@
+Please change the app key in app/build.gradle file before running

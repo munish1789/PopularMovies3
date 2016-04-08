@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">PopularMovies</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_detail">DetailActivity</string>
+    <string name="pref_request_label">Request Type</string>
+    <string name="pref_request_key">request</string>
+    <string name="pref_request_popular">popular</string>
+    <string name="pref_request_label_top">Top Rated</string>
+    <string name="pref_request_label_popular">Popular</string>
+    <string name="pref_request_top">top</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="pref_request_default">popular</string>
+</resources>

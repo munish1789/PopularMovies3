@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="pref_request_options">
+        <item>@string/pref_request_label_popular</item>
+        <item>@string/pref_request_label_top</item>
+    </string-array>
+
+    <string-array name="pref_request_values">
+        <item>@string/pref_request_popular</item>
+        <item>@string/pref_request_top</item>
+    </string-array>
+
+
+</resources>

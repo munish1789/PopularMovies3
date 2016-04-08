@@ -1,0 +1,17 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+
+    tools:context="com.popularmovies2.munish.popularmovies2.MainActivityFragment"
+    tools:showIn="@layout/main_activity">
+
+       <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/gridview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:numColumns="2"
+        android:stretchMode="columnWidth"
+        android:gravity="center"
+        android:nestedScrollingEnabled="true"/>
+</RelativeLayout>
