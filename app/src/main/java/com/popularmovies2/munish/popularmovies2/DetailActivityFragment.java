@@ -2,6 +2,7 @@ package com.popularmovies2.munish.popularmovies2;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -15,6 +16,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.squareup.picasso.Picasso;
 
@@ -30,12 +33,14 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
-
+import java.util.HashMap;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class DetailActivityFragment extends Fragment {
+public class DetailActivityFragment extends Fragment  {
+
+    private final int MOVIE_LOADER = 0;
+
     private final   String LOG_TAG =DetailActivityFragment.class.getSimpleName();
    // private MovieDto mDto;
     public DetailActivityFragment() {
@@ -49,13 +54,47 @@ private String BASE_URL = "http://image.tmdb.org/t/p/w500//";
     private ArrayAdapter<Trailer> mTrailerAdapter;
     private ArrayAdapter<String> mReviewsAdapter;
 
+
+  /*  @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        // This is called when a new Loader needs to be created.  This
+        // fragment only uses one loader, so we don't care about checking the id.
+
+        // To only show current and future dates, filter the query to return weather only for
+        // dates after or including today.
+
+        // Sort order:  Ascending, by date.
+      *//*  String sortOrder = MovieContract.MovieEntry.COLUMN_FAV_MOVIE_ID + " ASC";
+
+        String userid = Utility.getuserId(getActivity());
+        Uri weatherForLocationUri = MovieContract.MovieEntry.buildMovieUri();
+
+        return new CursorLoader(getActivity(),
+                weatherForLocationUri,
+                FORECAST_COLUMNS,
+                null,
+                null,
+                sortOrder);*//*
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
     public class TrailerAdapter extends ArrayAdapter<Trailer>
     {
 
         public TrailerAdapter(Context context, int resource, int textViewResourceId, List<Trailer> objects) {
             super(context, resource, textViewResourceId, objects);
         }
-    }
+    }*/
 
 public class Trailer
 {
@@ -88,12 +127,14 @@ public class Trailer
     private TextView mTitle;
     private TextView mYear;
     private String mPath;
+    private String mMovieId;
 
     private TextView mRuntime;
     private TextView mVote;
     private TextView mOverView;
     private ListView mListView;
     private ListView mReviewListView;
+    private ToggleButton mFavButton;
 
 
     @Override
@@ -105,11 +146,11 @@ public class Trailer
         // The detail Activity called via intent.  Inspect the intent for forecast data.
         Intent intent = getActivity().getIntent();
         if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
-            String movieId = intent.getStringExtra(Intent.EXTRA_TEXT);
+            final String movieId = intent.getStringExtra(Intent.EXTRA_TEXT);
             FetchMovieDetails task = new FetchMovieDetails();
 
             Log.v(LOG_TAG, "inside detailActivit");
-
+            mMovieId = movieId;
             task.execute(movieId);
             mTitle=(TextView) rootView.findViewById(R.id.title);
             mImage=(ImageView) rootView.findViewById(R.id.poster);
@@ -119,9 +160,60 @@ public class Trailer
             mRuntime=(TextView)rootView.findViewById(R.id.runTime);
             mVote= (TextView)rootView.findViewById(R.id.vote);
             mOverView= (TextView)rootView.findViewById(R.id.overView);
+            mFavButton= (ToggleButton)rootView.findViewById(R.id.toggleButton);
 
-            Log.v(LOG_TAG,"title_oncreate: "+mTitle.getText());
+            Log.v(LOG_TAG, "title_oncreate: "+mTitle.getText());
 
+
+
+            SharedPreferences prefs = getContext().getSharedPreferences("Fav_Movies", Context.MODE_PRIVATE);
+
+
+            SharedPreferences.Editor editor = prefs.edit();
+            HashMap<String,String> favMap =(HashMap<String,String>) prefs.getAll();
+            if(favMap.containsKey(mMovieId))
+            {
+                mFavButton.setChecked(true);//TextOn("In Favourite");
+                //mFavButton.setBackgroundColor(Color.YELLOW);
+            }
+
+           // mFavButton.setOnCheckedChangeListener(new );
+
+           /* mFavButton.setOnClickListener(new View.OnClickListener(){
+
+
+                @Override
+                public void onClick(View v) {
+
+                    SharedPreferences prefs = getContext().getSharedPreferences("Fav_Movies", Context.MODE_PRIVATE);
+                   SharedPreferences.Editor editor = prefs.edit();
+                    String movieListStr = prefs.getString("MovieList", "131635;/wM0BxA2zOtHW3f0xWZC9FcMLWl5.jpg");
+                    String[]  arr = movieListStr.split(",");
+                    boolean b= true;
+                    for(String ss :arr)
+                    {
+                        String[] arrInner  = ss.split(";");
+                        if(arrInner[0]==movieId) {
+                            b = false;
+                            mFavButton.setBackgroundColor(Color.GRAY);
+                            Toast.makeText(getContext(), "Already Added to Favourite", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    if(b)
+                    {
+                        String favMovie = movieId+";"+ mPath;
+                        editor.putString("MovieList",movieListStr+","+favMovie);
+                        Toast.makeText(getContext(), "Movie Added to Favourite", Toast.LENGTH_SHORT).show();
+                        mFavButton.setBackgroundColor(Color.YELLOW);
+                        editor.commit();
+                    }
+                    else
+                    {
+
+                    }
+
+                }
+            });*/
 
             mTrailerAdapter =
                     new ArrayAdapter<Trailer>(
@@ -147,6 +239,8 @@ public class Trailer
                 }
             });
 
+
+
         mReviewsAdapter = new ArrayAdapter<String>(
                 getActivity(),
                 R.layout.reviews_list_item_trailer,
@@ -156,12 +250,11 @@ public class Trailer
             mReviewListView = (ListView) rootView.findViewById(R.id.reviewListView);
             mReviewListView.setAdapter(mReviewsAdapter);
 
-
-
         }
 
         return rootView;
     }
+
 
 
     public class MovieDto
@@ -394,6 +487,8 @@ public class Trailer
             }
             movieDto.setReviews(t);
 
+
+
             //mTitle.setText(movieObj.getString("title"));
             Log.v(LOG_TAG, "movieDto iii: " + movieDto);
             return movieDto;
@@ -426,6 +521,56 @@ public class Trailer
            {
                mReviewsAdapter.add(ss);
            }
+            mFavButton.setOnClickListener(new View.OnClickListener() {
+
+
+                @Override
+                public void onClick(View v) {
+                    SharedPreferences prefs = getContext().getSharedPreferences("Fav_Movies", Context.MODE_PRIVATE);
+
+
+                    SharedPreferences.Editor editor = prefs.edit();
+                    HashMap<String,String> favMap =(HashMap<String,String>) prefs.getAll();
+                    if(favMap.containsKey(mMovieId))
+                    {
+                        Toast.makeText(getContext(), "Removed from Favoirite", Toast.LENGTH_SHORT).show();
+                        editor.remove(mMovieId);
+                        editor.commit();
+                    }
+                    else
+                    {
+                        editor.putString(mMovieId,mPath);
+                        Toast.makeText(getContext(), "Movie Added to Favourite", Toast.LENGTH_SHORT).show();
+                        //mFavButton.setBackgroundColor(Color.YELLOW);
+                        editor.commit();
+                    }
+
+
+                /*    SharedPreferences.Editor editor = prefs.edit();
+                    String movieListStr = prefs.getString("MovieList", "131635;/wM0BxA2zOtHW3f0xWZC9FcMLWl5.jpg");
+                    String[] arr = movieListStr.split(",");
+                    boolean b = true;
+                    for (String ss : arr) {
+                        String[] arrInner = ss.split(";");
+                        if (arrInner[0] == mMovieId) {
+                            b = false;
+                            mFavButton.setBackgroundColor(Color.GRAY);
+                            Toast.makeText(getContext(), "Already Added to Favourite", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    if (b) {
+                        String favMovie = mMovieId + ";" + mPath;
+                        editor.putString("MovieList", movieListStr + "," + favMovie);
+                        Toast.makeText(getContext(), "Movie Added to Favourite", Toast.LENGTH_SHORT).show();
+                        mFavButton.setBackgroundColor(Color.YELLOW);
+                        editor.commit();
+                    } else {
+
+                    }*/
+
+                }
+            });
+
             Log.v(LOG_TAG, "title_oncreate: " + mTitle.getText());
             Log.v(LOG_TAG, "Year: " + mYear.getText());
             Log.v(LOG_TAG, "path: " + mPath);

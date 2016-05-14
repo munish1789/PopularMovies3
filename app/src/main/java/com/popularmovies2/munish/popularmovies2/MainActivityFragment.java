@@ -2,6 +2,7 @@ package com.popularmovies2.munish.popularmovies2;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -40,6 +41,7 @@ public class MainActivityFragment extends Fragment  implements AdapterView.OnIte
     private String BASE_URL = "http://image.tmdb.org/t/p/w600//";
     private final   String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private ImageAdapter mAdapter;
+    private String lastSetting="";
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
@@ -55,14 +57,23 @@ public class MainActivityFragment extends Fragment  implements AdapterView.OnIte
     public void onStart() {
         super.onStart();
         Log.v(LOG_TAG, "Inside OnStart");
+        mAdapter.notifyDataSetChanged();
+        if( mAdapter.mMovieIds.isEmpty()) {
             FetchPopularMoviesTask task = new FetchPopularMoviesTask();
             task.execute();
+        }
 
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        if(!lastSetting.equalsIgnoreCase(Utility.getPreferedRequest(getContext()))) {
+            mAdapter.mMovieIds.clear();
+            FetchPopularMoviesTask task = new FetchPopularMoviesTask();
+            task.execute();
+        }
       //  super.onResume();
         this.onCreate(null);
     }
@@ -198,51 +209,81 @@ public class MainActivityFragment extends Fragment  implements AdapterView.OnIte
 
 // Will contain the raw JSON response as a string.
             String forecastJsonStr = null;
+            Map<String,String>    movieData=new HashMap<String,String>();
+            List<Map<String,String>> movieList = new ArrayList<Map<String,String> >();
 
             try {
                 // Construct the URL for the OpenWeatherMap query
                 // Possible parameters are available at OWM's forecast API page, at
                 // http://openweathermap.org/API#forecast
-                URL url;
+                URL url =null;
               String request = Utility.getPreferedRequest(getContext());
+                lastSetting=request;
                 Log.v(LOG_TAG,"request====="+request);
                 if(request.equalsIgnoreCase(getContext().getString(R.string.pref_request_popular))) {
 
                      url = new URL("http://api.themoviedb.org/3/movie/popular?api_key=" + BuildConfig.OPEN_MOVIES_API_KEY);
                 }
               //  else if(request.equalsIgnoreCase(getContext().getString(R.string.pref_request_label_top)))
-                else
+                else if(request.equalsIgnoreCase(getContext().getString(R.string.pref_request_top)))
                      url = new URL("http://api.themoviedb.org/3/movie/top_rated?api_key=" + BuildConfig.OPEN_MOVIES_API_KEY);
 
-                // Create the request to OpenWeatherMap, and open the connection
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
 
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    forecastJsonStr = null;
+                if(url!=null) {
+                    // Create the request to OpenWeatherMap, and open the connection
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setRequestMethod("GET");
+                    urlConnection.connect();
+
+                    // Read the input stream into a String
+                    InputStream inputStream = urlConnection.getInputStream();
+                    StringBuffer buffer = new StringBuffer();
+                    if (inputStream == null) {
+                        // Nothing to do.
+                        forecastJsonStr = null;
+                    }
+                    reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                        // But it does make debugging a *lot* easier if you print out the completed
+                        // buffer for debugging.
+                        buffer.append(line + "\n");
+                    }
+
+                    if (buffer.length() == 0) {
+                        // Stream was empty.  No point in parsing.
+                        forecastJsonStr = null;
+                    }
+                    forecastJsonStr = buffer.toString();
+
+                    Log.v(LOG_TAG, "JSON STRING: " + forecastJsonStr);
                 }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
+                 if(request.equalsIgnoreCase(getContext().getString(R.string.pref_request_fav)))
+                {
+                    Log.v(LOG_TAG, "favourite movies condition");
+                    SharedPreferences prefs = getContext().getSharedPreferences("Fav_Movies", Context.MODE_PRIVATE);
+                    HashMap<String,String> favMap = (HashMap<String,String>) prefs.getAll();
+                    for(String s : favMap.keySet())
+                    {
+                        movieData.put(s,favMap.get(s));
+                        movieList.add(movieData);
+                        movieData = new HashMap<String,String>();
+                    }
 
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
+                    /*String movieListStr = prefs.getString("MovieList", "131635;http://image.tmdb.org/t/p/w500///wM0BxA2zOtHW3f0xWZC9FcMLWl5.jpg");
+                    String[]  arr = movieListStr.split(",");
+                    if(arr.length>0) {
+                        for (String ss : arr) {
+                            String[] arrInner = ss.split(";");
+                            movieData.put(arrInner[0], BASE_URL + arrInner[1]);
+                            movieList.add(movieData);
+                            movieData = new HashMap<String, String>();
+                        }
+                    }*/
+                    // url = new URL("http://api.themoviedb.org/3/movie/top_rated?api_key=" + BuildConfig.OPEN_MOVIES_API_KEY);
                 }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    forecastJsonStr = null;
-                }
-                forecastJsonStr = buffer.toString();
-
-                Log.v(LOG_TAG, "JSON STRING: "+forecastJsonStr );
             } catch (IOException e) {
                 Log.e("PlaceholderFragment", "Error ", e);
                 // If the code didn't successfully get the weather data, there's no point in attempting
@@ -255,8 +296,10 @@ public class MainActivityFragment extends Fragment  implements AdapterView.OnIte
                 if (reader != null) {
                     try {
                         reader.close();
+                        if(movieList.size()==0) {
+                            movieList = getMovieData(forecastJsonStr);
+                        }
 
-                        return  getMovieData(forecastJsonStr);
                     } catch (final IOException e) {
                         Log.e("PlaceholderFragment", "Error closing stream", e);
                     } catch (JSONException e) {
@@ -264,7 +307,7 @@ public class MainActivityFragment extends Fragment  implements AdapterView.OnIte
                     }
                 }
             }
-            return null;
+            return  movieList;
         }
 
         private List<Map<String, String>> getMovieData(String jsonStr) throws JSONException {

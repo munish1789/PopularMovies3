@@ -10,4 +10,12 @@
     <string name="pref_request_top">top</string>
     <string name="title_activity_settings">Settings</string>
     <string name="pref_request_default">popular</string>
+
+    <string name="pref_userid"></string>
+    <string name="pref_userid_default">popular</string>
+
+    <string name="pref_request_fav">fav</string>
+    <string name="pref_request_label_fav">Favourite Movie</string>
+
+
 </resources>
