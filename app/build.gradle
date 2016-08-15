@@ -22,7 +22,7 @@ android {
         mavenCentral()
     }
     buildTypes.each {
-        it.buildConfigField 'String', 'OPEN_MOVIES_API_KEY', MYAPIKEY
+        it.buildConfigField 'String', 'OPEN_MOVIES_API_KEY', "\"a0083c29a4115493069418153f6939ed\""
     }
 
 }
@@ -34,4 +34,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:design:23.1.1'
     compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.facebook.stetho:stetho:1.3.1'
 }
